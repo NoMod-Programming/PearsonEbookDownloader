@@ -18,3 +18,5 @@ Where python3 points to the location of a python interpreter with the PyPDF2 mod
 This will take a few minutes, downloading each individual page of the PDF (thanks, Pearson, for using *individual* pdf files for each page a thousand page book!) to a temporary directory, then merging them into a final PDF.
 
 The output pdf will be saved into the current directory as `out.pdf`
+
+Also... Please don't use this for piracy. I paid for my online textbook, as should you, but I paid for a working textbook, not something that takes a minute to load each page of. While I can't stop you, please only use this utility if you have paid for the textbook.
