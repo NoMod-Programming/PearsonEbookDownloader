@@ -39,7 +39,8 @@ def main(eTextUrl):
     bookInfoGetUrl = bookInfoUrl.format(bookData["bookid"][0])
     #print(hsidUrl(bookInfoGetUrl))
     with urllib.request.urlopen(hsidUrl(bookInfoGetUrl)) as bookInfoRequest:
-        bookInfo = json.load(bookInfoRequest)
+        str_response = bookInfoRequest.read().decode('utf-8')
+        bookInfo = json.loads(str_response)
         bookInfo = bookInfo[0]['userBookTOList'][0]
 
     pageInfoGetUrl = pageInfoUrl.format(
@@ -50,7 +51,7 @@ def main(eTextUrl):
         authkey=bookData['sessionid'][0],
         )
     with urllib.request.urlopen(hsidUrl(pageInfoGetUrl)) as pageInfoRequest:
-        pageInfo = json.load(pageInfoRequest)
+        pageInfo = json.loads(pageInfoRequest.read().decode('utf-8'))
         pageInfo = pageInfo[0]['pdfPlayerPageInfoTOList']
 
     def getPageUrl(pdfPage, isCover="N"):
@@ -99,7 +100,7 @@ def main(eTextUrl):
             scenarioid=bookData['scenario'][0],
             )
         with urllib.request.urlopen(hsidUrl(bookmarkInfoGetUrl)) as bookmarkInfoRequest:
-            bookmarkInfo = json.load(bookmarkInfoRequest)
+            bookmarkInfo = json.loads(bookmarkInfoRequest.read().decode('utf-8'))
             bookmarkInfo = bookmarkInfo[0]['basketsInfoTOList'][0]
 
         def recursiveSetBookmarks(aDict, parent=None):
