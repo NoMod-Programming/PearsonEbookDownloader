@@ -15,9 +15,29 @@ from PyPDF2.generic import NameObject, DictionaryObject, ArrayObject, NumberObje
 from multiprocessing.pool import ThreadPool
 
 language = "en_US"
+roletypeid = 2 # 3 for instructor
 
 arabicRegex = re.compile(r"^(?P<prefix>.*?)(\d+)$")
 romanRegex = re.compile(r"^(?P<prefix>.*?)((?:(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})|M{0,4}(CM|C?D|D?C{1,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})|M{0,4}(CM|CD|D?C{0,3})(XC|X?L|L?X{1,3})(IX|IV|V?I{0,3})|M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|I?V|V?I{1,3})))+)$", re.IGNORECASE)
+
+# Some interesting parts of the books js code:
+#
+# MD5_SECRET_KEY: "ipadsecuretext"
+# Dear Pearson,
+#   Please don't consider MD5 a "secure" algorithm by any means.
+# Sincerely,
+# Everybody that looks at your horrifying code
+#
+# UserRoleType: {
+#     Student: 2,
+#     Instructor: 3,
+# }
+# The above corresponds to the `roletypeid` GET parameter in a lot pf the requests
+# Surprisingly, it's not checked at any point to see if, say, a student is impersonating
+# a teacher, even though the API throws out an error if it is omited.
+#
+# Also, since it's there, a good TODO would be to download other types of media along with the PDF.
+# Should be relatively simple.
 
 bookInfoUrl = "http://view.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbookinfov2?bookid={}&outputformat=JSON"
 pageInfoUrl = "https://view.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpagedetails?userid={userid}&userroleid={userroleid}&bookid={bookid}&bookeditionid={bookeditionid}&authkey={authkey}"
@@ -33,6 +53,19 @@ def hsidUrl(aUrl):
 
 def main(eTextUrl):
     bookData = urllib.parse.parse_qs(eTextUrl.split("?")[-1])
+    if (bookData.get("values", None)) is not None:
+        bookData = {
+            itemName : [itemValue] for itemName, itemValue in
+            zip(*[iter(bookData["values"][0].split("::"))]*2)
+        }
+        # A few fixes in terms of capitalization
+        bookData["bookid"] = bookData["bookID"]
+        bookData["userid"] = bookData["userID"]
+        bookData["sessionid"] = bookData["sessionID"]
+
+        # We'll default to the roletypeid for a student
+        bookData["roletypeid"] = [roletypeid] # 3 for Instructor... the server doesn't care, though
+
 
     print("Downloading metadata and eText information...")
 
