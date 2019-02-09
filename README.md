@@ -11,9 +11,9 @@ To use this utility, first log into the pearson website and access the E-Book. T
 
 Then, run this utility as follows:
 
-    python3 downloader.py <url you copied>
+    python3 downloader.py <url you copied, surrounded by quotes>
 
-Where python3 points to the location of a python interpreter with the PyPDF2 module available (`pip install pypdf2`)
+Where python3 points to the location of a python interpreter with the PyPDF2 module available (`pip install pypdf2`).
 
 This will take a few minutes, downloading each individual page of the PDF (thanks, Pearson, for using *individual* pdf files for each page a thousand page book!) to a temporary directory, then merging them into a final PDF.
 
