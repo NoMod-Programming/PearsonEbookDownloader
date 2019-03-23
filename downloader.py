@@ -132,11 +132,19 @@ def main(eTextUrl):
             bookeditionid=bookInfo['bookEditionID'],
             scenarioid=bookData['scenario'][0],
             )
+
+        bookmarksExist = True
+            
         with urllib.request.urlopen(hsidUrl(bookmarkInfoGetUrl)) as bookmarkInfoRequest:
-            bookmarkInfo = json.loads(bookmarkInfoRequest.read().decode('utf-8'))
-            bookmarkInfo = bookmarkInfo[0]['basketsInfoTOList'][0]
+            try:
+                bookmarkInfo = json.loads(bookmarkInfoRequest.read().decode('utf-8'))
+                bookmarkInfo = bookmarkInfo[0]['basketsInfoTOList'][0]
+            except Exception as e:
+                bookmarksExist = False
 
         def recursiveSetBookmarks(aDict, parent=None):
+            if isinstance(aDict, dict):
+                aDict = [aDict]
             for bookmark in aDict:
                 # These are the main bookmarks under this parent (or the whole document if parent is None)
                 bookmarkName = bookmark['n'] # Name of the section
@@ -146,9 +154,13 @@ def main(eTextUrl):
 
                 if 'be' in bookmark:
                     recursiveSetBookmarks(bookmark['be'], latestBookmark)
-        print("Adding bookmarks...")
-        fileMerger.addBookmark("Cover", 0) # Add a bookmark to the cover at the beginning
-        recursiveSetBookmarks(bookmarkInfo['document'][0]['bc']['b']['be'])
+
+        if bookmarksExist:
+            print("Adding bookmarks...")
+            fileMerger.addBookmark("Cover", 0) # Add a bookmark to the cover at the beginning
+            recursiveSetBookmarks(bookmarkInfo['document'][0]['bc']['b']['be'])
+        else:
+            print("Bookmarks don't exist for ID {}".format(bookData['bookid']))
         print("Fixing metadata...")
         # Hack to fix metadata and page numbers:
         pdfPageLabelTable = [(v,k) for k,v in pdfPageTable.items()]
@@ -195,7 +207,7 @@ def main(eTextUrl):
         })
 
         print("Writing PDF...")
-        with open("out.pdf", "wb") as outFile:
+        with open("{} - {}.pdf".format(bookData['bookid'][0], bookInfo['title']).replace("/",""), "wb") as outFile:
             fileMerger.write(outFile)
 
 if __name__ == '__main__':
