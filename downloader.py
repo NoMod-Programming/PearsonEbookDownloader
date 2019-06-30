@@ -17,6 +17,12 @@ from multiprocessing.pool import ThreadPool
 language = "en_US"
 roletypeid = 2 # 3 for instructor
 
+# Make their server think this is a regular book request
+handler = urllib.request.ProxyHandler({})
+opener = urllib.request.build_opener(handler)
+opener.addheaders = [("Origin","https://etext.pearson.com")]
+urllib.request.install_opener(opener)
+
 arabicRegex = re.compile(r"^(?P<prefix>.*?)(\d+)$")
 romanRegex = re.compile(r"^(?P<prefix>.*?)((?:(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})|M{0,4}(CM|C?D|D?C{1,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})|M{0,4}(CM|CD|D?C{0,3})(XC|X?L|L?X{1,3})(IX|IV|V?I{0,3})|M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|I?V|V?I{1,3})))+)$", re.IGNORECASE)
 
