@@ -1,4 +1,8 @@
 #! /usr/bin/env python3
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import urllib.parse
 import tempfile
 import json
@@ -15,7 +19,7 @@ from PyPDF2.generic import NameObject, DictionaryObject, ArrayObject, NumberObje
 from multiprocessing.pool import ThreadPool
 
 language = "en_US"
-roletypeid = 2 # 3 for instructor
+roletypeid = 2 # 3 for instructor, though the server doesn't seem to care
 
 # Make their server think this is a regular book request
 handler = urllib.request.ProxyHandler({})
@@ -45,10 +49,10 @@ romanRegex = re.compile(r"^(?P<prefix>.*?)((?:(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{
 # Also, since it's there, a good TODO would be to download other types of media along with the PDF.
 # Should be relatively simple.
 
-bookInfoUrl = "http://view.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbookinfov2?bookid={}&outputformat=JSON"
-pageInfoUrl = "https://view.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpagedetails?userid={userid}&userroleid={userroleid}&bookid={bookid}&bookeditionid={bookeditionid}&authkey={authkey}"
-pdfUrl = "https://view.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpdfpage?globalbookid={bookid}&pdfpage={pdfpage}&iscover={iscover}&authkey={authkey}"
-bookmarkInfoUrl = "https://view.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbaskettocinfo?userroleid={userroleid}&bookid={bookid}&language={language}&authkey={authkey}&bookeditionid={bookeditionid}&basket=all&scenarioid={scenarioid}&platformid=1001"
+bookInfoUrl = "http://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbookinfov2?bookid={}&outputformat=JSON"
+pageInfoUrl = "https://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpagedetails?bookid={bookid}&bookeditionid={bookeditionid}&userroleid={userroleid}&ispreview=Y"
+pdfUrl = "https://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpdfpage?globalbookid={bookid}&pdfpage={pdfpage}&iscover={iscover}&ispreview=Y"
+bookmarkInfoUrl = "https://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbaskettocinfo?userroleid={userroleid}&bookid={bookid}&language={language}&bookeditionid={bookeditionid}&basket=all&ispreview=Y&scenarioid={scenarioid}"
 
 def hsidUrl(aUrl):
     # Append this url's "hsid" to it (md5 hash of its http url)
@@ -57,25 +61,25 @@ def hsidUrl(aUrl):
     md5Hasher.update(aUrl.replace("https://","http://").encode("utf-8"))
     return aUrl + "&hsid=" + md5Hasher.hexdigest()
 
-def main(eTextUrl):
-    bookData = urllib.parse.parse_qs(eTextUrl.split("?")[-1])
-    if (bookData.get("values", None)) is not None:
-        bookData = {
-            itemName : [itemValue] for itemName, itemValue in
-            zip(*[iter(bookData["values"][0].split("::"))]*2)
-        }
-        # A few fixes in terms of capitalization
-        bookData["bookid"] = bookData["bookID"]
-        bookData["userid"] = bookData["userID"]
-        bookData["sessionid"] = bookData["sessionID"]
+def main(bookId):
+    if bookId.startswith("http"):
+        print("Trying to extract bookId from url")
+        bookData = urllib.parse.parse_qs(bookId.split("?")[-1])
+        if (bookData.get("values", None)) is not None:
+            bookData = {
+                itemName : [itemValue] for itemName, itemValue in
+                zip(*[iter(bookData["values"][0].split("::"))]*2)
+            }
+            # Fix capitalization
+            bookData["bookid"] = bookData["bookID"]
+        bookId = bookData["bookid"][0]
 
-        # We'll default to the roletypeid for a student
-        bookData["roletypeid"] = [roletypeid] # 3 for Instructor... the server doesn't care, though
-
+    bookId = int(bookId)
+    print("Downloading book id {}. Please open an issue on GitHub if this book id is incorrect.".format(bookId))
 
     print("Downloading metadata and eText information...")
 
-    bookInfoGetUrl = bookInfoUrl.format(bookData["bookid"][0])
+    bookInfoGetUrl = bookInfoUrl.format(bookId)
     #print(hsidUrl(bookInfoGetUrl))
     with urllib.request.urlopen(hsidUrl(bookInfoGetUrl)) as bookInfoRequest:
         str_response = bookInfoRequest.read().decode('utf-8')
@@ -83,11 +87,9 @@ def main(eTextUrl):
         bookInfo = bookInfo[0]['userBookTOList'][0]
 
     pageInfoGetUrl = pageInfoUrl.format(
-        userid=bookData['userid'][0],
-        userroleid=bookData['roletypeid'][0],
-        bookid=bookData['bookid'][0],
-        bookeditionid=bookInfo['bookEditionID'],
-        authkey=bookData['sessionid'][0],
+        userroleid=roletypeid,
+        bookid=bookId,
+        bookeditionid=bookInfo['bookEditionID']
         )
     with urllib.request.urlopen(hsidUrl(pageInfoGetUrl)) as pageInfoRequest:
         pageInfo = json.loads(pageInfoRequest.read().decode('utf-8'))
@@ -98,8 +100,7 @@ def main(eTextUrl):
         getPage = pagePath = pdfUrl.format(
             bookid=bookInfo['globalBookID'],
             pdfpage=pdfPage,
-            iscover=isCover,
-            authkey=bookData['sessionid'][0]
+            iscover=isCover
         )
         return hsidUrl(getPage)
 
@@ -131,12 +132,11 @@ def main(eTextUrl):
 
         # And then add all the bookmarks to the final PDF
         bookmarkInfoGetUrl = bookmarkInfoUrl.format(
-            userroleid=bookData['roletypeid'][0],
-            bookid=bookData['bookid'][0],
+            userroleid=roletypeid,
+            bookid=bookId,
             language=language,
-            authkey=bookData['sessionid'][0],
             bookeditionid=bookInfo['bookEditionID'],
-            scenarioid=bookData['scenario'][0],
+            scenarioid=1001
             )
 
         bookmarksExist = True
@@ -166,7 +166,7 @@ def main(eTextUrl):
             fileMerger.addBookmark("Cover", 0) # Add a bookmark to the cover at the beginning
             recursiveSetBookmarks(bookmarkInfo['document'][0]['bc']['b']['be'])
         else:
-            print("Bookmarks don't exist for ID {}".format(bookData['bookid']))
+            print("Bookmarks don't exist for ID {}".format(bookId))
         print("Fixing metadata...")
         # Hack to fix metadata and page numbers:
         pdfPageLabelTable = [(v,k) for k,v in pdfPageTable.items()]
@@ -213,11 +213,11 @@ def main(eTextUrl):
         })
 
         print("Writing PDF...")
-        with open("{} - {}.pdf".format(bookData['bookid'][0], bookInfo['title']).replace("/",""), "wb") as outFile:
+        with open("{} - {}.pdf".format(bookId, bookInfo['title']).replace("/",""), "wb") as outFile:
             fileMerger.write(outFile)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Missing url of eText!")
+        print("Missing url of eText or bookId!")
         sys.exit(0)
     main(sys.argv[1])

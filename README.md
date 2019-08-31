@@ -7,11 +7,15 @@ Not to mention that the E-Book sometimes doesn't even load, leading to an inabil
 
 # Using this utility
 
-To use this utility, first log into the pearson website and access the E-Book. Then copy the url of the book *after* roughly 10 seconds (it should now contain multiple GET parameters). This url is the only argument to this utility.
+To use this utility, first log into the pearson website and access the E-Book. After about 10 seconds (or once the eText is loaded), either copy the entire URL or just the bookID parameter (anywhere from 5-7 digits long).
 
 Then, run this utility as follows:
 
     python3 downloader.py <url you copied, surrounded by quotes>
+
+Or
+
+	python3 downloader.py <bookid, without quotes>
 
 Where python3 points to the location of a python interpreter with the PyPDF2 module available (`pip install pypdf2`).
 
