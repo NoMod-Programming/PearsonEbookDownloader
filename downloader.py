@@ -213,7 +213,7 @@ def main(bookId):
         })
 
         print("Writing PDF...")
-        with open("{} - {}.pdf".format(bookId, bookInfo['title']).replace("/",""), "wb") as outFile:
+        with open("{} - {}.pdf".format(bookId, bookInfo['title']).replace("/","").replace(":","_"), "wb") as outFile:
             fileMerger.write(outFile)
 
 if __name__ == '__main__':
