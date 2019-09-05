@@ -1,0 +1,23 @@
+<!doctype HTML>
+<html>
+	<head>
+		<title>PearsonEbookDownloader</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/core.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/md5.min.js"></script>
+		<script src="scripts/es6-promise-pool.js"></script>
+		<script src="https://unpkg.com/pdf-lib@1.0.1/dist/pdf-lib.min.js"></script>
+		<script src="scripts/download.js"></script>
+	</head>
+	<body>
+		<h1>PearsonEbookDownloader</h1>
+		<form id="form" action="javascript:doDownload();">
+			BookId (5-6 digit ID, found in the URL for your book): <input type="text" id="bookid"></input>
+			<input type="submit" value="Download"></input>
+		</form>
+		<div style="clear: both; width: 100%; content: ''; display: table; height: 70vh">
+			<textarea id="bookInfo" style="float: left; width: 32%; height: 70vh" readonly></textarea>
+			<textarea id="pageInfo" style="float: left; width: 32%; height: 70vh" readonly></textarea>
+			<textarea id="downloadStatus" style="float: left; width: 32%; height: 70vh" readonly></textarea>
+		</div>
+	</body>
+</html>
