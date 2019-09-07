@@ -20,3 +20,7 @@ This will take a few minutes, downloading each individual page of the PDF (thank
 The output pdf will be saved into the current directory as `out.pdf`
 
 Also... Please don't use this for piracy. I paid for my online textbook, as should you, but I paid for a working textbook, not something that takes a minute to load each page of. While I can't stop you, please only use this utility if you have paid for the textbook.
+
+## Donation
+
+One more thing: If you found this script helpful, please recommend it to others or [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=epedemont%40protonmail.ch&currency_code=USD&source=url). I'd really appreciate it.
