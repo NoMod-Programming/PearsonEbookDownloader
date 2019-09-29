@@ -2,25 +2,40 @@ window.onload = function(){
   'use strict';
 
   const corsProxy = "https://crossorigin-originchanger.herokuapp.com/"
-  const metadataUrl = "http://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbookinfov2?bookid={bookid}&outputformat=JSON"
-  const pageInfoUrl = "http://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpagedetails?bookid={bookid}&bookeditionid={bookeditionid}&userroleid=2&ispreview=Y"
-  const pdfPageUrl = "http://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getpdfpage?globalbookid={bookid}&pdfpage={pdfpage}&iscover={iscover}&ispreview=Y"
-  const bookmarkInfoUrl = "http://auth.ebookplus.pearsoncmg.com/ebook/pdfplayer/getbaskettocinfo?userroleid=2&bookid={bookid}&language=en_US&bookeditionid={bookeditionid}&basket=all&ispreview=Y&scenarioid=1001"
+  const metadataUrl = "/ebook/pdfplayer/getbookinfov2?bookid={bookid}&outputformat=JSON"
+  const pageInfoUrl = "/ebook/pdfplayer/getpagedetails?bookid={bookid}&bookeditionid={bookeditionid}&userroleid=2&ispreview=Y"
+  const pdfPageUrl = "/ebook/pdfplayer/getpdfpage?globalbookid={bookid}&pdfpage={pdfpage}&iscover={iscover}&ispreview=Y"
+  const bookmarkInfoUrl = "/ebook/pdfplayer/getbaskettocinfo?userroleid=2&bookid={bookid}&language=en_US&bookeditionid={bookeditionid}&basket=all&ispreview=Y&scenarioid=1001"
 
 
   const arabicRegex = /^(.*?)(\d+)/gm;
   const romanRegex = /^(.*?)((?:(M{1,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})|M{0,4}(CM|C?D|D?C{1,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})|M{0,4}(CM|CD|D?C{0,3})(XC|X?L|L?X{1,3})(IX|IV|V?I{0,3})|M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|I?V|V?I{1,3})))+)$/gmi
+  const urlParseRegex = /(?:bookid(?:=|::)(\d+)).*(?:bookserver(?:=|::)(\d))/gmi
 
 
+  var bookServer;
   var bookId;
   var bookEditionId;
   var globalBookId;
   var pdfCoverArt;
 
 
+  const serverUrls = {
+    PROD1: "http://auth.ebookplus.pearsoncmg.com",
+    PROD2: "http://auth.etext.home2.pearsoncmg.com",
+    PROD3: "http://auth.etext.home3.pearsoncmg.com",
+    PPE1: "http://auth.ppe1.ebookplus.pearsoncmg.com",
+    PPE2: "http://auth.ppe2.ebookplus.pearsoncmg.com",
+    PPE3: "http://auth.ppe3.ebookplus.pearsoncmg.com",
+    CERT1: "http://auth.cert1.ebookplus.pearsoncmg.com",
+    CERT2: "http://auth.cert2.ebookplus.pearsoncmg.com",
+    CERT3: "http://auth.cert1.ebookpcl.pearsoncmg.com",
+  }
+
+
   function hsidUrl(url) {
-    var hsid = CryptoJS.MD5("ipadsecuretext" + url.replace("https","http"));
-    return url + "&hsid=" + hsid;
+    var hsid = CryptoJS.MD5("ipadsecuretext" + (bookServer + url).replace("https","http"));
+    return bookServer + url + "&hsid=" + hsid;
   }
 
 
@@ -347,6 +362,28 @@ window.onload = function(){
 
   window.doDownload = function() {
     bookId = document.getElementById("bookid").value;
+
+    var bookServerId = document.getElementById("bookserver").value;
+
+    var heuristicBookServerId;
+    if (bookId.indexOf("http") >= 0) {
+      if (urlParseRegex.exec(bookId) !== null) {
+        urlParseRegex.lastIndex = 0;
+        var match = urlParseRegex.exec(bookId);
+        bookId = match[1];
+        heuristicBookServerId = match[2];
+      }
+      urlParseRegex.lastIndex = 0;
+    }
+
+    if (bookServerId == "auto") {
+      heuristicBookServerId = heuristicBookServerId ? heuristicBookServerId : 1;
+      bookServer = serverUrls["PROD" + heuristicBookServerId];
+    } else {
+      bookServer = serverUrls[bookServerId];
+    }
+
+
     var requestUrl = metadataUrl.replace("{bookid}", bookId);
     requestUrl = hsidUrl(requestUrl);
 
