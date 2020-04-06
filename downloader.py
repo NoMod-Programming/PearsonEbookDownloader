@@ -128,7 +128,9 @@ def main(bookId):
         # Begin to assemble the final PDF, first by adding all the pages
         fileMerger = PdfFileWriter()
         for pdfFile in sorted(os.listdir(pdfDownloadDir)):
-            fileMerger.addPage(PdfFileReader(os.path.join(pdfDownloadDir, pdfFile)).getPage(0))
+            page = PdfFileReader(os.path.join(pdfDownloadDir, pdfFile)).getPage(0)
+            os.remove(os.path.join(pdfDownloadDir, pdfFile)) # Save on memory a bit
+            fileMerger.addPage(page)
 
         # And then add all the bookmarks to the final PDF
         bookmarkInfoGetUrl = bookmarkInfoUrl.format(
