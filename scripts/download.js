@@ -220,8 +220,8 @@ window.onload = function(){
       let count = 0;
       for (var bookmarkData in bookmarkDict) {
         var bookmarkData = bookmarkDict[bookmarkData];
-        let bookmarkName = bookmarkData['n']; // Name of the section
-        let pageNum = reversePdfPageTable[bookmarkData['lv']['content'].toString()]; // First page of the section
+        let bookmarkName = bookmarkData['name']; // Name of the section
+        let pageNum = reversePdfPageTable[bookmarkData['linkvalue']['content'].toString()]; // First page of the section
 
         let latestBookmarkRef = mergedPdf.context.nextRef();
 
@@ -250,7 +250,7 @@ window.onload = function(){
         let childBookmarks = [];
         let childCount = 0;
         if (bookmarkData.hasOwnProperty('be')) {
-          [childBookmarks, childCount] = recursiveSetBookmarks(bookmarkData['be'], latestBookmarkRef);
+          [childBookmarks, childCount] = recursiveSetBookmarks(bookmarkData['basketentry'], latestBookmarkRef);
 
           // Since we have children, make sure that their "Prev" and "Next" are set
           // And set our own "First" and "Last" items
@@ -295,7 +295,7 @@ window.onload = function(){
 
     mergedPdf.context.assign(coverBookmark, cbookmark);
     
-    let [topLevelBookmarks, count] = recursiveSetBookmarks(bookmarkData[0]['basketsInfoTOList'][0]['document'][0]['bc']['b']['be'], outlineRef);
+    let [topLevelBookmarks, count] = recursiveSetBookmarks(bookmarkData[0]['basketsInfoTOList'][0]['document'][0]["basketcollection"]["basket"]["basketentry"], outlineRef);
 
     let lastBookmark;
     if (count > 0) {
