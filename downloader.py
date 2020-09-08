@@ -155,18 +155,18 @@ def main(bookId):
                 aDict = [aDict]
             for bookmark in aDict:
                 # These are the main bookmarks under this parent (or the whole document if parent is None)
-                bookmarkName = bookmark['n'] # Name of the section
-                pageNum = str(bookmark['lv']['content']) # First page (in the pdf's format)
+                bookmarkName = bookmark['name'] # Name of the section
+                pageNum = str(bookmark['linkvalue']['content']) # First page (in the pdf's format)
 
                 latestBookmark = fileMerger.addBookmark(bookmarkName, pdfPageTable[pageNum], parent)
 
-                if 'be' in bookmark:
-                    recursiveSetBookmarks(bookmark['be'], latestBookmark)
+                if 'basketentry' in bookmark:
+                    recursiveSetBookmarks(bookmark['basketentry'], latestBookmark)
 
         if bookmarksExist:
             print("Adding bookmarks...")
             fileMerger.addBookmark("Cover", 0) # Add a bookmark to the cover at the beginning
-            recursiveSetBookmarks(bookmarkInfo['document'][0]['bc']['b']['be'])
+            recursiveSetBookmarks(bookmarkInfo['document'][0]['basketcollection']['basket']['basketentry'])
         else:
             print("Bookmarks don't exist for ID {}".format(bookId))
         print("Fixing metadata...")
